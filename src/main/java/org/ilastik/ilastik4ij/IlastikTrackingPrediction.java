@@ -48,7 +48,7 @@ import net.imagej.ImgPlus;
 /**
  *
  */
-@Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Tracking")
+@Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Ilastik Tracking")
 public class IlastikTrackingPrediction implements Command {
 
     // needed services:
@@ -62,9 +62,6 @@ public class IlastikTrackingPrediction implements Command {
     DatasetService datasetService;
     
     // own parameters:
-    @Parameter(label = "Save temporary file for training only, without prediction.")
-    private Boolean saveOnly = false;
-
     @Parameter(label = "Trained ilastik project file")
     private File projectFileName;
 
@@ -135,13 +132,6 @@ public class IlastikTrackingPrediction implements Command {
             log.info("Dumping secondary input image to temporary file " + tempProbOrSegFileName);
             new Hdf5DataSetWriterFromImgPlus(inputProbOrSegImage.getImgPlus(), tempProbOrSegFileName, "data", compressionLevel, log).write();
 
-            if (saveOnly) {
-                log.info("Saved files for training to " + tempInFileName + " and " + tempProbOrSegFileName
-                        + ". Use it to train an ilastik tracking project now,"
-                        + " and make sure to select to copy the raw and " + secondInputType + " data into the project file in the data selection");
-                return;
-            }
-
             try {
                 tempOutFileName = IlastikUtilities.getTemporaryFileName("_outTracking.h5");
             } catch (IOException e) {
@@ -155,23 +145,21 @@ public class IlastikTrackingPrediction implements Command {
 
             predictions = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log, datasetService).read();
             predictions.setName("Tracking result");
-        } catch (final Exception e) {
-            log.warn("Ilastik Tracking Prediction failed");
-        } finally {
-            if (!saveOnly) {
-                log.info("Cleaning up");
-                // get rid of temporary files
-                if (tempInFileName != null) {
-                    new File(tempInFileName).delete();
-                }
-                if (tempProbOrSegFileName != null) {
-                    new File(tempProbOrSegFileName).delete();
-                }
-                if (tempOutFileName != null) {
-                    new File(tempOutFileName).delete();
-                }
-            }
-        }
+		} catch (final Exception e) {
+			log.warn("Ilastik Tracking Prediction failed");
+		} finally {
+			log.info("Cleaning up");
+			// get rid of temporary files
+			if (tempInFileName != null) {
+				new File(tempInFileName).delete();
+			}
+			if (tempProbOrSegFileName != null) {
+				new File(tempProbOrSegFileName).delete();
+			}
+			if (tempOutFileName != null) {
+				new File(tempOutFileName).delete();
+			}
+		}
     }
 
     private void runIlastik(String tempInRawFileName, String tempProbOrSegFilename, String tempOutFileName) {

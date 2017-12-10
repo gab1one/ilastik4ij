@@ -61,9 +61,6 @@ public class IlastikPixelClassificationPrediction implements Command {
         OptionsService optionsService;
 
         // own parameters:
-        @Parameter(label = "Save temporary file for training only, without prediction.")
-        private Boolean saveOnly = false;
-
         @Parameter(label = "Trained ilastik project file")
         private File projectFileName;
 
@@ -110,12 +107,6 @@ public class IlastikPixelClassificationPrediction implements Command {
                     log.info("Dumping input image to temporary file " + tempInFileName);
                     new Hdf5DataSetWriterFromImgPlus(inputImage.getImgPlus(), tempInFileName, "data", 0, log).write();
 
-                    if (saveOnly) {
-                            log.info("Saved file for training to " + tempInFileName + ". Use it to train an ilastik pixelClassificationProject now,"
-                                            + " and make sure to select to copy the raw data into the project file in the data selection");
-                            return;
-                    }
-
                     try {
                             tempOutFileName = IlastikUtilities.getTemporaryFileName("_out" + chosenOutputType + ".h5");
                     } catch (IOException e) {
@@ -134,16 +125,13 @@ public class IlastikPixelClassificationPrediction implements Command {
                 catch(final Exception e)
                 {
                     log.warn("something went wrong during processing ilastik pixel classification");
-                }
-				finally {
-					if (!saveOnly) {
-						log.info("Cleaning up");
-						// get rid of temporary files
-						if (tempInFileName != null)
-							new File(tempInFileName).delete();
-						if (tempOutFileName != null)
-							new File(tempOutFileName).delete();
-					}
+				} finally {
+					log.info("Cleaning up");
+					// get rid of temporary files
+					if (tempInFileName != null)
+						new File(tempInFileName).delete();
+					if (tempOutFileName != null)
+						new File(tempOutFileName).delete();
 				}
         }
 
